@@ -82,7 +82,7 @@ for(i=1;i<N;i++) // loop over the time lag
    //printf("%lf\n",(time[N]-time[i]));
 }
 
-
+// this code is not working
 fclose(pro);
 fclose(file);
 return 0;
