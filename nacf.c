@@ -65,8 +65,8 @@ FILE *pro = fopen("nacf.dat","w") ;
 // calculating normalised autocorrelation function
 for(i=1;i<N;i++) // loop over the time lag
 {
-     csum = 0.0;
-     csum = integrate(i,N,dt,deted);
+     //csum = 0.0;
+     csum += integrate(i,N,dt,deted);
 
   //   printf("%d  %d  %d  ",i, k,N);
      //printf("%lf\n",(time[k]-time[i]));
