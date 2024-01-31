@@ -2,7 +2,7 @@
 #include<stdio.h>
 #include<math.h>
 #include<stdlib.h>
-
+#include"integrate.c"
 int main()
 {
 
@@ -19,14 +19,14 @@ double *deted;
 double *nacf;
 // normalisation constant
 double *nf;
-int N = 224001;
+int N = 320001;
 int n = 12000;
 //initialising the average
 double av = 0.0;
 double aver ;
 // initialise correlation sum 
-double csum = 0.0;
- FILE *file = fopen("dis40ns.dat", "r");  // Open the file in read mode
+double csum;
+ FILE *file = fopen("disnct.dat", "r");  // Open the file in read mode
 
     if (file == NULL) {
         perror("Error opening file");
@@ -47,13 +47,13 @@ for(i = 0;i<N;i++)
 {
    av += eted[i];
 }
-aver = av/(double)N;
-printf("avarage of eted %lf \n",aver);
+aver = av/(double)N*dt;
+//printf("avarage of eted %lf \n",aver);
 // calculating normalised autocorrelation function
 for(i = 0;i<N;i++)
 {
    deted[i] = eted[i]-aver;
-   printf("%lf \n",deted[i]);
+  // printf("%lf \n",deted[i]);
 }
 // opening file to store nacf data
 FILE *pro = fopen("nacf.dat","w") ;
@@ -66,23 +66,19 @@ FILE *pro = fopen("nacf.dat","w") ;
 for(i=1;i<N;i++) // loop over the time lag
 {
      csum = 0.0;
-     for(j=0;j<N-i;j++) // loop over the complete time series
-     {
-          csum += deted[j]*deted[j+i];
-     
-     }
-     k = N-i;
+     csum = integrate(i,N,dt,deted);
+
   //   printf("%d  %d  %d  ",i, k,N);
      //printf("%lf\n",(time[k]-time[i]));
-    nacf[i] = csum/((double)N*dt - (double)i*dt);
-    double nf = nacf[1];
-    printf("%lf\n",nf);
-     fprintf(pro," %lf   %lf \n",(double)i*dt,(nacf[i]/nf));
+    nacf[i] = fabs(csum/((double)N*dt - (double)i*dt));
+     nf[i] += nacf[1];
+    //printf("%lf\n",nf[i]);
+     fprintf(pro," %lf   %lf \n",(double)i*dt,(nacf[i]/nf[i]));
 
    //printf("%lf\n",(time[N]-time[i]));
 }
 
-// this code is not working
+
 fclose(pro);
 fclose(file);
 return 0;
