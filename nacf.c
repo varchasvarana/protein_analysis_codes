@@ -2,7 +2,8 @@
 #include<stdio.h>
 #include<math.h>
 #include<stdlib.h>
-#include"integrate.c"
+//#include<omp.h> // Include OpenMP header file
+
 int main()
 {
 
@@ -19,14 +20,14 @@ double *deted;
 double *nacf;
 // normalisation constant
 double *nf;
-int N = 320001;
-int n = 12000;
+long int N = 2391861;
+//long int N = 160000000;
 //initialising the average
 double av = 0.0;
 double aver ;
 // initialise correlation sum 
-double csum;
- FILE *file = fopen("disnct.dat", "r");  // Open the file in read mode
+double csum = 0.0;
+ FILE *file = fopen("n_c_residu.xvg", "r");  // Open the file in read mode
 
     if (file == NULL) {
         perror("Error opening file");
@@ -41,44 +42,56 @@ nf = (double*)calloc(N,sizeof(double));
 for(i = 0;i<N;i++)
 {
      fscanf(file,"%lf  %lf \n",&time[i],&eted[i]);
+     printf("%d  %lf \n",i,eted[i]);
 }
 // avarage of the end-to-end distance
+//#pragma omp parallel for reduction(+:av)
 for(i = 0;i<N;i++)
 {
    av += eted[i];
 }
-aver = av/(double)N*dt;
-//printf("avarage of eted %lf \n",aver);
+aver = av/(double)N;
+printf("avarage of eted %lf \n",aver);
 // calculating normalised autocorrelation function
+ //#pragma omp parallel for
 for(i = 0;i<N;i++)
 {
    deted[i] = eted[i]-aver;
-  // printf("%lf \n",deted[i]);
+   //printf("%lf \n",deted[i]);
 }
 // opening file to store nacf data
-FILE *pro = fopen("nacf.dat","w") ;
+FILE *pro = fopen("sim.dat","w") ;
 /*for(i =0;i<N;i++)
 {
    fprintf(pro," %lf   %lf \n",time[i],nacf[i]);
 
 }*/
 // calculating normalised autocorrelation function
+ //#pragma omp parallel for private(csum)
 for(i=1;i<N;i++) // loop over the time lag
 {
-     //csum = 0.0;
-     csum += integrate(i,N,dt,deted);
-
+     csum = 0.0;
+ //      #pragma omp simd reduction(+:csum)
+       // integration loop
+     for(j=0;j<N-i;j++) // loop over the complete time series
+     {
+          csum += eted[j]*eted[j+i];
+     //printf("%lf  %lf\n",eted[j],eted[i+j]);
+     }
+    
   //   printf("%d  %d  %d  ",i, k,N);
      //printf("%lf\n",(time[k]-time[i]));
-    nacf[i] = fabs(csum/((double)N*dt - (double)i*dt));
-     nf[i] += nacf[1];
-    //printf("%lf\n",nf[i]);
-     fprintf(pro," %lf   %lf \n",(double)i*dt,(nacf[i]/nf[i]));
-
+    nacf[i] = (csum/((double)N*500*dt - (double)i*500*dt));
+    double nf = nacf[1];
+   // printf("%lf\n",nf);
+     fprintf(pro," %lf   %lf \n",(double)i*500*dt,(nacf[i]/nf));
+ printf(" %lf   %lf \n",((double)i*500*dt),(nacf[i]/nf));
    //printf("%lf\n",(time[N]-time[i]));
 }
 
 
+
+// this code is not working
 fclose(pro);
 fclose(file);
 return 0;
